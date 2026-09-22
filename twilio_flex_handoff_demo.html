@@ -1,0 +1,405 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Twilio Flex - Virtual Agent Handoff Demo</title>
+<style>
+:root {
+  --navy:#121c2d; --blue:#0263e0; --blue-soft:#eaf3ff; --red:#d61f1f;
+  --green:#087f5b; --amber:#995900; --amber-soft:#fff8e6; --slate:#475569;
+  --bg:#f1f5f9; --card:#fff; --border:#dbe3ec; --shadow:0 4px 16px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:#172033}
+button,textarea{font:inherit}.header{background:var(--navy);color:#fff;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 12px rgba(0,0,0,.2)}
+.brand,.agent-status,.row,.section-title,.call-title{display:flex;align-items:center}.brand{gap:11px}.logo{width:38px;height:38px;border-radius:11px;background:#f22f46;display:grid;place-items:center}.brand-name{font-weight:700}.brand-sub{font-size:12px;color:#cbd5e1;margin-top:2px}.agent-status{gap:9px;font-size:14px}.dot{width:10px;height:10px;background:#34d399;border-radius:50%}
+.layout{display:grid;grid-template-columns:280px minmax(430px,1fr) 385px;gap:16px;padding:16px;max-width:1700px;margin:auto}.stack{display:flex;flex-direction:column;gap:16px}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.card-body{padding:16px;background-color:black;}
+.eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#64748b;margin-bottom:16px}.call-title{gap:12px}
+.icon-circle{width:44px;height:44px;border-radius:50%;background:#dbeafe;display:grid;place-items:center;color:#0657b9}
+.muted{color:#a1a1aa;font-size:14px}
+.live{margin-top:16px;background:#eafaf4;color:#087f5b;border-radius:11px;padding:11px;font-size:14px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.btn{border:1px solid #cbd5e1;background:#fff;color:#243044;border-radius:9px;padding:9px 10px;cursor:pointer;font-weight:650;display:flex;align-items:center;justify-content:center;gap:7px}
+#copyBtn{background:#0263e0;color:white;}
+.btn-danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn[disabled]{opacity:.42;cursor:not-allowed}
+.kv{margin-bottom:13px}.kv:last-child{margin:0}
+.kv-label{font-size:13px;color:#a1a1aa}
+.kv-value{font-weight:650;margin-top:3px;color:white;}
+.banner{border:1px solid #abd0ff;background:var(--blue-soft);border-radius:16px;padding:16px;box-shadow:var(--shadow);justify-content:space-between;gap:14px;align-items:flex-start}
+.banner h1{font-size:21px;margin:0 0 5px}.banner-title{display:flex;gap:9px;align-items:center}
+.pill{display:inline-block;border-radius:999px;padding:5px 10px;margin-top:6px;font-size:12px;font-weight:700;background:#ffefbd;color:#714500;white-space:nowrap}
+.tabs{display:flex;background:#fff;border-radius:12px;padding:5px;box-shadow:var(--shadow);gap:4px}
+.tab{flex:1;border:0;border-radius:9px;background:transparent;padding:10px;cursor:pointer;font-weight:700;color:#526175}
+.tab.active{background:var(--navy);color:#fff}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.section{border:1px solid var(--border);border-radius:16px;background:#fff;box-shadow:var(--shadow);overflow:hidden}
+.section.accent{border-color:#8dbcf5}
+.section-head{width:100%;border:0;background:#fff;padding:15px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:750}
+.section-title{gap:8px}
+.section-content{padding:0 16px 16px}
+.section.collapsed .section-content{display:none}
+.chev{transition:transform .2s}
+.section.collapsed .chev{transform:rotate(-90deg)}
+.summary{font-size:16px;line-height:1.55}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
+.tag{padding:5px 9px;background:#eef2f7;border-radius:999px;font-size:12px;font-weight:650}
+.action-list{margin:0;padding:0;list-style:none}
+.action-list li{display:flex;gap:10px;margin:9px 0;font-size:14px;line-height:1.4}
+.num{color:#075fc5;font-weight:800}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:12px}
+.field-label{font-size:12px;color:#64748b}
+.field-value{font-weight:700;margin:5px 0 9px}
+.agent-confirm {display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px;font-weight:bold;font-style:italic;color:#027324;}
+.agent-confirm-checkbox {cursor:pointer;accent-color:#027324;}
+.transcript-tools{display:flex;gap:8px;margin-bottom:14px}
+.spacer {flex:1;}.bubble{max-width:88%;padding:11px 13px;border-radius:16px;background:#f0f3f7;margin:10px 0;line-height:1.4;font-size:14px}
+.bubble.caller{background:#ddebff;margin-left:auto}
+.speaker{font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px}
+.warning-box{border:1px solid #f0cb72;background:var(--amber-soft);padding:13px;border-radius:12px}
+.warning-box+.warning-box{margin-top:11px}
+.warning-title{display:flex;gap:8px;font-weight:800;align-items:center}
+.warning-box p{color:#526175;font-size:13px;line-height:1.4}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.notes{width:100%;min-height:128px;padding:11px;border:1px solid #cbd5e1;border-radius:10px;resize:vertical}
+.notes:focus{outline:2px solid #89b9f5;border-color:transparent}
+.button-stack{display:grid;gap:8px;margin-top:10px}
+.disclaimer{background:#dfe5ec;color:#526175;border-radius:10px;padding:10px;font-size:11px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#172033;color:#fff;padding:10px 15px;border-radius:9px;box-shadow:var(--shadow);display:none;z-index:10}
+.toast.show{display:block}
+.icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.small-icon{width:16px;height:16px}
+@media(max-width:1100px){.layout{grid-template-columns:240px 1fr}.right-panel{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}.right-panel>.disclaimer{grid-column:1/-1}}@media(max-width:760px){.layout{display:block}.layout>*,.stack{margin-bottom:14px}.right-panel{display:block}.right-panel>*{margin-bottom:14px}.fields{grid-template-columns:1fr}.header{align-items:flex-start}.agent-status{font-size:12px}.banner{display:block}.pill{margin-top:10px}.controls{grid-template-columns:1fr}.tabs{overflow:auto}.tab{min-width:130px}}
+.sentiment-badge {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.65);
+    border: 1px solid #c7dcff;
+    border-radius: 12px;
+}
+
+.sentiment-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: #075fc5;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.sentiment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    margin-top: 8px;
+}
+
+.sentiment-label {
+    font-weight: 600;
+}
+
+.sentiment-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sentiment-concerned {
+    background: #eab308;
+    color: #8a5a00;
+}
+
+.sentiment-positive {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.sentiment-neutral {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.sentiment-negative {
+    background: #ef4444;
+    color: white;
+}
+
+.sentiment-reasons {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #475569;
+}
+
+.sentiment-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-positive {
+    background: #22c55e;
+}
+
+.legend-mixed {
+    background: #eab308;
+}
+
+.legend-negative {
+    background: #ef4444;
+}
+
+.legend-neutral {
+    background: #3b82f6;
+}
+
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand"><div class="logo"><svg class="icon" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg></div><div><div class="brand-name">Twilio Flex</div><div class="brand-sub">Medical Information</div></div></div>
+  <div class="agent-status"><span class="dot"></span>Available · JP Connellan</div>
+</header>
+<main class="layout">
+  <aside class="stack">
+    <div class="card"><div class="card-body"><div class="eyebrow">Active interaction</div><div class="call-title"><div class="icon-circle"><svg class="icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z"/></svg></div>
+<div style="color:white;"><strong>Inbound call</strong>
+<div class="muted">French · MI France</div>
+</div>
+</div>
+<div class="live"><strong>Live</strong> · <span id="timer">06:42</span></div><div class="controls"><button class="btn" id="muteBtn"><svg class="icon small-icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/></svg><span>Mute</span></button><button class="btn" id="holdBtn">Hold</button><button class="btn btn-danger" id="endBtn"><svg class="icon small-icon" viewBox="0 0 24 24"><path d="M3 15c5.5-4 12.5-4 18 0l-3 4-4-2v-3H10v3l-4 2z"/></svg>End</button></div></div></div>
+    <div class="card"><div class="card-body"><div class="kv"><div class="kv-label">Queue</div><div class="kv-value">Medical Information · FR</div></div><div class="kv"><div class="kv-label">Routing intent</div><div class="kv-value">Product Stability</div></div><div class="kv"><div class="kv-label">Handoff reason</div><div class="kv-value">Caller requested an agent</div></div></div></div>
+  </aside>
+  <section class="stack">
+    <div class="banner"><div><div class="banner-title"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><h1>Virtual agent handoff</h1></div><div class="muted">Review the captured context before speaking. Confirm critical details with the caller.</div>
+<div class="sentiment-badge">
+
+    <div class="sentiment-header">
+        Conversation Insights
+    </div>
+
+<div class="sentiment-legend">
+
+    <div class="legend-item">
+        <span class="legend-dot legend-positive"></span>
+        Positive
+    </div>
+
+    <div class="legend-item">
+        <span class="legend-dot legend-mixed"></span>
+        Mixed
+    </div>
+
+    <div class="legend-item">
+        <span class="legend-dot legend-negative"></span>
+        Negative
+    </div>
+
+    <div class="legend-item">
+        <span class="legend-dot legend-neutral"></span>
+        Neutral
+    </div>
+
+</div>
+
+    <div class="sentiment-row">
+        <span class="sentiment-label">Overall Tone</span>
+        <span class="sentiment-pill sentiment-negative">
+            Negative
+        </span>
+    </div>
+
+    <div class="sentiment-reasons">
+        • Caller expressed annoyance about waiting to speak to somebody<br>
+    </div>
+
+</div>
+</div><span class="pill">AI-generated · Human review required</span></div>
+    <div class="tabs" role="tablist"><button class="tab active" data-tab="summary">Handoff summary</button><button class="tab" data-tab="details">Collected data</button><button class="tab" data-tab="transcript">Transcript</button></div>
+    <div id="summary" class="tab-panel active stack">
+      <div class="section accent"><button class="section-head"><span class="section-title">At-a-glance briefing</span><span class="chev">⌄</span></button><div class="section-content"><div class="summary">Healthcare professional calling from France about a <strong>90-minute storage excursion</strong> involving <strong>Boostrix</strong> and <strong>Bexcero</strong>. The caller wants to know whether the product can still be used.</div><div class="tags"><span class="tag">Boostrix</span><span class="tag">Storage</span><span class="tag">French</span></div><button class="btn" id="copyBtn">Copy summary</button></div></div>
+      <div class="section"><button class="section-head"><span class="section-title">What the agent should do next</span><span class="chev">⌄</span></button><div class="section-content"><ol class="action-list"><li><span class="num">1.</span>Introduce yourself and acknowledge that you have the information already provided.</li><li><span class="num">2.</span>Verify  details provided by caller.</li><li><span class="num">3.</span>Complete required AE and product complaint screening.</li><li><span class="num">4.</span>Use approved content and document the final response in the MI system.</li></ol></div></div>
+    </div>
+<div id="details" class="tab-panel">
+
+    <!-- Existing panel -->
+    <div class="section accent">
+        <button class="section-head">
+            <span>General information collected by virtual agent</span>
+            <span class="chev">⌄</span>
+        </button>
+
+        <div class="section-content">
+            <div class="muted" style="margin-bottom:12px">
+                6 confirmed fields · Review inferred values
+            </div>
+
+            <div class="fields" id="fields"></div>
+        </div>
+    </div>
+    <!-- New Thermostability Panel -->
+    <div class="section accent" style="margin-top:16px;">
+        <button class="section-head">
+            <span>Topic information collected by virtual agent</span>
+            <span class="chev">⌄</span>
+        </button>
+
+        <div class="section-content">
+
+            <div class="fields">
+
+                <div class="field">
+                    <div class="field-label">Other products involved</div>
+                    <div class="field-value">Bexsero</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">Temperature direction</div>
+                    <div class="field-value">High</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">Temperature value</div>
+                    <div class="field-value">34</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">Temperature unit</div>
+                    <div class="field-value">Celsius</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">Total Excursion Duration Value</div>
+                    <div class="field-value">90</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">Excursion Duration Unit</div>
+                    <div class="field-value">Minutes</div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+    <div id="transcript" class="tab-panel"><div class="section accent"><button class="section-head"><span>Virtual agent conversation</span><span class="chev">⌄</span></button><div class="section-content">
+
+<div class="transcript-tools">
+
+    <button class="btn btn-primary lang-btn" data-lang="translated">
+        English translation
+    </button>
+
+    <button class="btn lang-btn" data-lang="original">
+        French original
+    </button>
+
+<div class="spacer"></div>
+
+    <button class="btn" id="downloadTranscriptBtn">
+        ⬇ Download Transcript
+    </button>
+
+</div>
+
+
+<div id="conversation"></div></div></div></div>
+  </section>
+  <aside class="stack right-panel">
+    <div class="section accent"><button class="section-head"><span>Safety screening</span><span class="chev">⌄</span></button><div class="section-content"><div class="warning-box"><div class="warning-title">⚠ Adverse event</div><p>Agent confirmation required. Confirm whether there is an adverse event reported.</p><label class="check"><input id="aeCheck" type="checkbox">I have completed AE screening</label></div><div class="warning-box"><div class="warning-title">⚠ Product complaint</div><p>Potential storage-related issue. Confirm whether there is a product defect or complaint.</p><label class="check"><input id="pqcCheck" type="checkbox">I have completed PQC screening</label></div></div></div>
+    <div class="section"><button class="section-head"><span>Agent notes</span><span class="chev">⌄</span></button><div class="section-content"><textarea class="notes" placeholder="Add notes during the live call…"></textarea><div class="button-stack"><button class="btn btn-primary" id="continueBtn" disabled>Confirm review</button><button class="btn" id="caseBtn">Open MI case</button></div></div></div>
+    <div class="disclaimer">Prototype uses synthetic caller and product data for design discussion only.</div>
+  </aside>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const fields=[['Caller','Dr Élodie Martin'],['Caller type','Healthcare professional'],['Country','France'],['Preferred language','French'],['Product','Boostrix'],['Topic','Thermostability'],['Contact permission','Verbal consent captured']];
+const transcript = [
+  ['00:03','Virtual agent',
+   'Bonjour. Comment puis-je vous aider ?',
+   'Hello. How can I help you?'
+  ],
+
+  ['00:08','Caller',
+   'Cela fait une éternité que j’essaie de vous joindre. Je suis pharmacienne et j’appelle au sujet du produit A.',
+   'I have been trying to get through for ages. I am a pharmacist calling about Boostrix.'
+  ],
+
+  ['00:13','Virtual agent',
+   'Pouvez-vous décrire votre question ?',
+   'Could you describe your question?'
+  ],
+
+  ['00:18','Caller',
+   'Le produit est resté hors du réfrigérateur pendant quatre heures. Puis-je encore l’administrer?',
+   'The product was left outside the refrigerator for an hour and a half. Can I still administer it?'
+  ],
+
+  ['00:20','Virtual agent',
+   'Pouvez-vous décrire votre question ?',
+   'OK, how long was it left outside and what temperature was it?'
+  ]
+];
+const fieldsEl=document.getElementById('fields'); 
+
+fields.forEach(([label, value]) => {
+const showAgentConfirm = ['Product', 'Topic'].includes(label);
+fieldsEl.insertAdjacentHTML('beforeend', `
+<div class="field">
+<div class="field-label">${label}</div>
+<div class="field-value">${value}</div>
+${
+showAgentConfirm
+? `<label class="agent-confirm">
+<input type="checkbox" class="agent-confirm-checkbox">
+Agent confirmed
+</label>`
+: ''
+}
+</div>
+`);
+});
+
+let currentLang='translated'; function renderTranscript(){const el=document.getElementById('conversation');el.innerHTML='';transcript.forEach(([timestamp,speaker,original,translated])=>el.insertAdjacentHTML('beforeend',
+
+`<div class="bubble ${speaker==='Caller'?'caller':''}">
+    <div class="speaker">
+        ${speaker}
+        <span class="timestamp">${timestamp}</span>
+    </div>
+    ${currentLang==='translated' ? translated : original}
+</div>`
+
+));} renderTranscript();
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active')}));
+document.querySelectorAll('.section-head').forEach(btn=>btn.addEventListener('click',()=>btn.parentElement.classList.toggle('collapsed')));
+document.querySelectorAll('.lang-btn').forEach(btn=>btn.addEventListener('click',()=>{currentLang=btn.dataset.lang;document.querySelectorAll('.lang-btn').forEach(x=>x.classList.remove('btn-primary'));btn.classList.add('btn-primary');renderTranscript()}));
+const toast=document.getElementById('toast');function showToast(t){toast.textContent=t;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1500)}
+document.getElementById('copyBtn').addEventListener('click',async()=>{const text='HCP calling from France about a 90-minute storage excursion involving Boostrix and Bexcero. Human verification required.';try{await navigator.clipboard.writeText(text);showToast('Summary copied')}catch(e){showToast('Copy is blocked in this browser')}});
+const ae=document.getElementById('aeCheck'),pqc=document.getElementById('pqcCheck'),cont=document.getElementById('continueBtn');function gate(){cont.disabled=!(ae.checked&&pqc.checked)}ae.addEventListener('change',gate);pqc.addEventListener('change',gate);cont.addEventListener('click',()=>showToast('Review confirmed'));document.getElementById('caseBtn').addEventListener('click',()=>showToast('Demo: MI case opened'));
+let muted=false;document.getElementById('muteBtn').addEventListener('click',function(){muted=!muted;this.querySelector('span').textContent=muted?'Unmute':'Mute';this.classList.toggle('btn-primary',muted)});let held=false;document.getElementById('holdBtn').addEventListener('click',function(){held=!held;this.textContent=held?'Resume':'Hold';this.classList.toggle('btn-primary',held)});document.getElementById('endBtn').addEventListener('click',()=>showToast('Demo: call ended'));
+</script>
+</body>
+</html>
